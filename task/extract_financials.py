@@ -1,13 +1,13 @@
-import fitz  # PyMuPDF
+import fitz  
 import pytesseract
 from PIL import Image
 import io
 import re
 import os
 import json
-from difflib import get_close_matches  # 🔧 NEW
+from difflib import get_close_matches  
 
-# 👇 Path to Tesseract
+# Path to Tesseract
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 # File paths
@@ -25,11 +25,11 @@ def extract_text_from_page(page):
     text = pytesseract.image_to_string(img, config="--psm 6")
     return clean_text(text)
 
-# 🔧 Normalize label for matching
+#Normalize label for matching
 def normalize(text):
     return re.sub(r'[^a-z]', '', text.lower())
 
-# 🔧 Fuzzy match labels
+#Fuzzy match labels
 def match_label(line, known_labels):
     for label in known_labels:
         matches = get_close_matches(normalize(line), [normalize(label)], cutoff=0.7)
@@ -37,7 +37,7 @@ def match_label(line, known_labels):
             return label
     return None
 
-# Robust financial parser
+#Robust financial parser
 def parse_financial_data(text):
     financial_data = {}
 
@@ -60,10 +60,10 @@ def parse_financial_data(text):
         "Total comprehensive income/loss for the period/year, net of tax"
     ]
 
-    # Extract periods like "31 Dec 2023", "30 Sep 2023"
+    #Extract periods like "31 Dec 2023", "30 Sep 2023"
     periods = re.findall(r"\d{1,2} \w{3,9} \d{4}", text)
 
-    # 🆕 Fallback periods
+    #Fallback periods
     if len(periods) < 6:
         periods = [
             "Quarter ended 31 December 2024",
@@ -74,7 +74,7 @@ def parse_financial_data(text):
             "Year ended 31 March 2024"
         ]
 
-    # 🆕 Parse each line and use fuzzy label detection
+    #Parse each line and use fuzzy label detection
     lines = text.split('\n')
     for line in lines:
         if not line.strip():
@@ -97,11 +97,11 @@ def parse_financial_data(text):
 
     return financial_data
 
-# Main processor
+#Main processor
 def process_pdf(path):
     doc = fitz.open(path)
 
-    # Page 6 (Consolidated)
+    #Page 6 (Consolidated)
     print("[INFO] Extracting Consolidated from page 6")
     page_consolidated = doc[5]
     text_consolidated = extract_text_from_page(page_consolidated)
@@ -127,11 +127,9 @@ if __name__ == "__main__":
     print(f"Processing: {os.path.basename(INPUT_PDF_PATH)}")
     extracted_data = process_pdf(INPUT_PDF_PATH)
 
-    # DEBUG: Print extracted data before saving
     print("\n--- Extracted JSON Preview ---")
     print(json.dumps(extracted_data, indent=4))
 
-    # Ensure output folder exists
     os.makedirs(os.path.dirname(OUTPUT_JSON_PATH), exist_ok=True)
 
     try:
